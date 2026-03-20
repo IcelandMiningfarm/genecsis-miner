@@ -304,7 +304,18 @@ const PlanCard = ({ plan, type, index, onBuy }: PlanCardProps) => (
 
 // ── Main Page ──────────────────────────────────────────────
 const MiningPlans = () => {
+  const navigate = useNavigate();
   const [btcPrice, setBtcPrice] = useState(71076.52);
+  const [selectedPlan, setSelectedPlan] = useState<{ plan: PlanCardProps["plan"]; type: "BTC" | "USDT" } | null>(null);
+
+  const handleBuy = (plan: PlanCardProps["plan"], type: "BTC" | "USDT") => {
+    setSelectedPlan({ plan, type });
+  };
+
+  const handleConfirmPurchase = () => {
+    setSelectedPlan(null);
+    navigate("/deposit");
+  };
 
   useEffect(() => {
     const load = async () => {
