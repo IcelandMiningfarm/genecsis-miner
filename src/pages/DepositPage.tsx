@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Copy, Check, Bitcoin, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 
 const depositHistory = [
@@ -12,8 +14,23 @@ const depositHistory = [
 ];
 
 const DepositPage = () => {
+  const location = useLocation();
+  const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<"BTC" | "USDT">("BTC");
+
+  useEffect(() => {
+    const state = location.state as { planName?: string; planPrice?: number; planType?: string; planDuration?: string } | null;
+    if (state?.planName) {
+      setSelectedCrypto(state.planType === "USDT" ? "USDT" : "BTC");
+      toast({
+        title: `📋 ${state.planName} selected`,
+        description: `Deposit $${state.planPrice?.toLocaleString()} in ${state.planType} to activate your ${state.planDuration} contract.`,
+      });
+      // Clear state so toast doesn't re-show on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
 
   const walletAddresses = {
     BTC: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",

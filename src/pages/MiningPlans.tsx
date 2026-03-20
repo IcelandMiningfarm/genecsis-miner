@@ -313,8 +313,16 @@ const MiningPlans = () => {
   };
 
   const handleConfirmPurchase = () => {
+    const plan = selectedPlan;
     setSelectedPlan(null);
-    navigate("/deposit");
+    navigate("/deposit", {
+      state: {
+        planName: plan?.plan.name,
+        planPrice: plan?.plan.price,
+        planType: plan?.type,
+        planDuration: plan?.plan.duration,
+      },
+    });
   };
 
   useEffect(() => {
