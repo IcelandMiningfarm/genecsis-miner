@@ -166,7 +166,7 @@ export const useLiveMiningData = () => {
     return () => clearInterval(interval);
   }, [isConnected]);
 
-  return { stats, activity, chartData, isConnected };
+  return { stats, activity, chartData, isConnected, btcPrice };
 };
 
 function ageTime(t: string): string {
