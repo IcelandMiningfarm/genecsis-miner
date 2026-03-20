@@ -27,14 +27,18 @@ interface ChartPoint {
 const randomDelta = (base: number, pct: number) =>
   base * (1 + (Math.random() - 0.5) * 2 * pct);
 
-const fetchBtcPrice = async (): Promise<number | null> => {
+const fetchBtcPrice = async (): Promise<{ price: number; change24h: number } | null> => {
   try {
     const res = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true",
+      { headers: { "x-cg-demo-api-key": "CG-9kLivg9HmUeX7VwDSgehcpLj" } }
     );
     if (!res.ok) return null;
     const data = await res.json();
-    return data.bitcoin?.usd ?? null;
+    return {
+      price: data.bitcoin?.usd ?? 0,
+      change24h: data.bitcoin?.usd_24h_change ?? 0,
+    };
   } catch {
     return null;
   }
