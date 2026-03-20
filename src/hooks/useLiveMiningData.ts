@@ -79,6 +79,7 @@ export const useLiveMiningData = () => {
   });
 
   const [isConnected, setIsConnected] = useState(false);
+  const [btcPrice, setBtcPrice] = useState({ price: 0, change24h: 0 });
   const tickRef = useRef(0);
 
   // Fetch real BTC price on mount and every 60s
