@@ -14,7 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      deposits: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          status: string
+          tx_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_balances: {
+        Row: {
+          btc_balance: number
+          id: string
+          updated_at: string
+          usdt_balance: number
+          user_id: string
+        }
+        Insert: {
+          btc_balance?: number
+          id?: string
+          updated_at?: string
+          usdt_balance?: number
+          user_id: string
+        }
+        Update: {
+          btc_balance?: number
+          id?: string
+          updated_at?: string
+          usdt_balance?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_purchases: {
+        Row: {
+          created_at: string
+          daily_earning: number
+          duration_days: number
+          expires_at: string
+          id: string
+          plan_name: string
+          plan_price: number
+          plan_type: string
+          purchased_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_earning?: number
+          duration_days: number
+          expires_at: string
+          id?: string
+          plan_name: string
+          plan_price: number
+          plan_type: string
+          purchased_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_earning?: number
+          duration_days?: number
+          expires_at?: string
+          id?: string
+          plan_name?: string
+          plan_price?: number
+          plan_type?: string
+          purchased_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          status: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          id?: string
+          status?: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          status?: string
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
