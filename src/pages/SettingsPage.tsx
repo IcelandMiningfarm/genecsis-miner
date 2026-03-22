@@ -1,11 +1,72 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Shield, Bell, Key } from "lucide-react";
+import { User, Shield, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 
 const SettingsPage = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setEmail(user.email ?? "");
+    const load = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("user_id", user.id)
+        .single();
+      if (data?.username) setUsername(data.username);
+    };
+    load();
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ username })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      toast({ title: "Profile updated" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password updated" });
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-2xl">
@@ -14,7 +75,6 @@ const SettingsPage = () => {
           <p className="text-muted-foreground text-sm mt-1">Manage your account preferences</p>
         </div>
 
-        {/* Profile */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
           <div className="flex items-center gap-2 mb-4">
             <User className="h-5 w-5 text-primary" />
@@ -23,56 +83,37 @@ const SettingsPage = () => {
           <div className="space-y-4">
             <div>
               <label className="text-sm text-muted-foreground mb-1.5 block">Username</label>
-              <Input defaultValue="CryptoMiner_01" className="bg-secondary border-border" />
+              <Input value={username} onChange={(e) => setUsername(e.target.value)} className="bg-secondary border-border" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground mb-1.5 block">Email</label>
-              <Input defaultValue="miner@example.com" className="bg-secondary border-border" />
+              <Input value={email} readOnly className="bg-secondary border-border opacity-60" />
             </div>
-            <Button className="gradient-primary text-primary-foreground">Save Changes</Button>
+            <Button onClick={handleSaveProfile} disabled={saving} className="gradient-primary text-primary-foreground">
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
         </motion.div>
 
-        {/* Security */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="h-5 w-5 text-accent" />
-            <h3 className="text-foreground font-semibold">Security</h3>
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-foreground">Two-Factor Authentication</p>
-                <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
-              </div>
-              <Switch />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-foreground">Login Notifications</p>
-                <p className="text-xs text-muted-foreground">Get notified on new logins</p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Change Password */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card p-6">
           <div className="flex items-center gap-2 mb-4">
             <Key className="h-5 w-5 text-primary" />
             <h3 className="text-foreground font-semibold">Change Password</h3>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground mb-1.5 block">Current Password</label>
-              <Input type="password" className="bg-secondary border-border" />
-            </div>
-            <div>
               <label className="text-sm text-muted-foreground mb-1.5 block">New Password</label>
-              <Input type="password" className="bg-secondary border-border" />
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                className="bg-secondary border-border"
+              />
             </div>
-            <Button className="gradient-primary text-primary-foreground">Update Password</Button>
+            <Button onClick={handleChangePassword} disabled={saving} className="gradient-primary text-primary-foreground">
+              {saving ? "Updating..." : "Update Password"}
+            </Button>
           </div>
         </motion.div>
       </div>

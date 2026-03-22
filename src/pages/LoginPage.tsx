@@ -1,19 +1,52 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Zap, Shield, Coins, ArrowUpRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Zap, Shield, Coins, ArrowUpRight, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) navigate("/dashboard", { replace: true });
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        toast({ title: "Account created!", description: "Check your email to confirm your account." });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const features = [
@@ -25,14 +58,12 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-background crypto-grid flex items-center justify-center p-4">
       <div className="w-full max-w-5xl grid lg:grid-cols-[1.2fr_1fr] gap-8 items-center">
-        {/* Login Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="glass-card p-8 md:p-10"
         >
-          {/* Logo */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold tracking-tight">
               <span className="text-accent glow-text-accent">CRYPTO</span>
@@ -53,10 +84,12 @@ const LoginPage = () => {
               <div>
                 <label className="text-sm font-medium text-foreground mb-1.5 block">Username</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     placeholder="Choose a username"
-                    className="pl-10 bg-secondary border-border focus:ring-primary focus:border-primary"
+                    className="pl-10 bg-secondary border-border"
                   />
                 </div>
               </div>
@@ -68,8 +101,11 @@ const LoginPage = () => {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="pl-10 bg-secondary border-border focus:ring-primary focus:border-primary"
+                  required
+                  className="pl-10 bg-secondary border-border"
                 />
               </div>
             </div>
@@ -80,8 +116,12 @@ const LoginPage = () => {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="pl-10 pr-10 bg-secondary border-border focus:ring-primary focus:border-primary"
+                  required
+                  minLength={6}
+                  className="pl-10 pr-10 bg-secondary border-border"
                 />
                 <button
                   type="button"
@@ -93,26 +133,13 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {!isSignUp && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" />
-                  <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                    Remember me
-                  </label>
-                </div>
-                <button type="button" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </button>
-              </div>
-            )}
-
             <Button
               type="submit"
+              disabled={loading}
               className="w-full h-12 gradient-primary text-primary-foreground font-semibold text-base glow-primary hover:opacity-90 transition-opacity"
             >
-              {isSignUp ? "Create Account" : "Sign In"}
-              <ArrowUpRight className="ml-2 h-4 w-4" />
+              {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
+              {!loading && <ArrowUpRight className="ml-2 h-4 w-4" />}
             </Button>
           </form>
 
@@ -129,7 +156,6 @@ const LoginPage = () => {
           </div>
         </motion.div>
 
-        {/* Features */}
         <div className="hidden lg:flex flex-col gap-5">
           {features.map((feature, i) => (
             <motion.div

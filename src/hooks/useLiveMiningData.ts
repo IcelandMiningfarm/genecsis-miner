@@ -1,21 +1,13 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MiningStats {
   btcBalance: number;
   usdValue: number;
   miningPower: number;
   dailyEarnings: number;
-  btcChange: string;
-  usdChange: string;
-  powerStatus: string;
-  earningsChange: string;
-}
-
-interface ActivityItem {
-  type: string;
-  amount: string;
-  time: string;
-  iconType: "reward" | "deposit" | "upgrade" | "withdrawal";
+  activePlans: number;
 }
 
 interface ChartPoint {
@@ -23,9 +15,6 @@ interface ChartPoint {
   earnings: number;
   hashrate: number;
 }
-
-const randomDelta = (base: number, pct: number) =>
-  base * (1 + (Math.random() - 0.5) * 2 * pct);
 
 const fetchBtcPrice = async (): Promise<{ price: number; change24h: number } | null> => {
   try {
@@ -45,50 +34,101 @@ const fetchBtcPrice = async (): Promise<{ price: number; change24h: number } | n
 };
 
 export const useLiveMiningData = () => {
+  const { user } = useAuth();
   const btcPriceRef = useRef(63000);
 
   const [stats, setStats] = useState<MiningStats>({
-    btcBalance: 0.04521,
-    usdValue: 2847.32,
-    miningPower: 95.4,
-    dailyEarnings: 0.00152,
-    btcChange: "+2.4%",
-    usdChange: "+5.1%",
-    powerStatus: "Active",
-    earningsChange: "+0.8%",
+    btcBalance: 0,
+    usdValue: 0,
+    miningPower: 0,
+    dailyEarnings: 0,
+    activePlans: 0,
   });
 
-  const [activity, setActivity] = useState<ActivityItem[]>([
-    { type: "Mining Reward", amount: "+0.00012 BTC", time: "Just now", iconType: "reward" },
-    { type: "Deposit", amount: "+0.05 BTC", time: "1 hour ago", iconType: "deposit" },
-    { type: "Plan Upgrade", amount: "-$500", time: "3 hours ago", iconType: "upgrade" },
-    { type: "Mining Reward", amount: "+0.00011 BTC", time: "5 hours ago", iconType: "reward" },
-    { type: "Withdrawal", amount: "-0.02 BTC", time: "1 day ago", iconType: "withdrawal" },
-  ]);
-
-  const [chartData, setChartData] = useState<ChartPoint[]>(() => {
-    const data: ChartPoint[] = [];
-    for (let i = 0; i < 30; i++) {
-      data.push({
-        day: `Day ${i + 1}`,
-        earnings: +(Math.random() * 0.005 + 0.002).toFixed(5),
-        hashrate: +(Math.random() * 20 + 80).toFixed(1),
-      });
-    }
-    return data;
-  });
-
+  const [activePurchases, setActivePurchases] = useState<any[]>([]);
+  const [deposits, setDeposits] = useState<any[]>([]);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [btcPrice, setBtcPrice] = useState({ price: 0, change24h: 0 });
-  const tickRef = useRef(0);
+  const [hasMining, setHasMining] = useState(false);
 
-  // Fetch real BTC price on mount and every 60s
+  // Fetch user data from DB
+  useEffect(() => {
+    if (!user) return;
+
+    const loadData = async () => {
+      // Fetch balance
+      const { data: balance } = await supabase
+        .from("user_balances")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      // Fetch active purchases
+      const { data: purchases } = await supabase
+        .from("user_purchases")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "active");
+
+      // Fetch deposits
+      const { data: deps } = await supabase
+        .from("deposits")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      // Fetch withdrawals
+      const { data: withs } = await supabase
+        .from("withdrawals")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      const btcBal = balance?.btc_balance ?? 0;
+      const activeP = purchases ?? [];
+      const totalDailyEarning = activeP.reduce((sum, p) => sum + (p.daily_earning || 0), 0);
+      const totalMiningPower = activeP.length * 10; // 10 TH/s per active plan as base
+
+      setActivePurchases(activeP);
+      setDeposits(deps ?? []);
+      setWithdrawals(withs ?? []);
+      setHasMining(activeP.length > 0);
+
+      setStats({
+        btcBalance: btcBal,
+        usdValue: btcBal * btcPriceRef.current,
+        miningPower: totalMiningPower,
+        dailyEarnings: totalDailyEarning,
+        activePlans: activeP.length,
+      });
+
+      // Generate chart data based on purchases
+      if (activeP.length > 0) {
+        const data: ChartPoint[] = [];
+        for (let i = 0; i < 30; i++) {
+          data.push({
+            day: `Day ${i + 1}`,
+            earnings: +(totalDailyEarning * (0.8 + Math.random() * 0.4)).toFixed(6),
+            hashrate: +(totalMiningPower * (0.9 + Math.random() * 0.2)).toFixed(1),
+          });
+        }
+        setChartData(data);
+      }
+    };
+
+    loadData();
+  }, [user]);
+
+  // Fetch real BTC price
   useEffect(() => {
     const load = async () => {
       const data = await fetchBtcPrice();
       if (data) {
         btcPriceRef.current = data.price;
         setBtcPrice(data);
+        setStats(prev => ({ ...prev, usdValue: prev.btcBalance * data.price }));
       }
       setIsConnected(true);
     };
@@ -99,85 +139,12 @@ export const useLiveMiningData = () => {
       if (data) {
         btcPriceRef.current = data.price;
         setBtcPrice(data);
+        setStats(prev => ({ ...prev, usdValue: prev.btcBalance * data.price }));
       }
     }, 60000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Live stat updates every 3s
-  useEffect(() => {
-    if (!isConnected) return;
-
-    const interval = setInterval(() => {
-      tickRef.current += 1;
-      const tick = tickRef.current;
-
-      setStats((prev) => {
-        const reward = +(Math.random() * 0.00005 + 0.00005).toFixed(6);
-        const newBtc = +(prev.btcBalance + reward).toFixed(6);
-        const btcPrice = btcPriceRef.current;
-        const newUsd = +(newBtc * btcPrice).toFixed(2);
-        const newPower = +randomDelta(prev.miningPower, 0.02).toFixed(1);
-        const newEarnings = +randomDelta(prev.dailyEarnings, 0.05).toFixed(6);
-
-        const btcPct = (((newBtc - 0.04521) / 0.04521) * 100).toFixed(1);
-        const usdPct = (((newUsd - 2847.32) / 2847.32) * 100).toFixed(1);
-        const earnPct = (((newEarnings - 0.00152) / 0.00152) * 100).toFixed(1);
-
-        return {
-          btcBalance: newBtc,
-          usdValue: newUsd,
-          miningPower: newPower,
-          dailyEarnings: newEarnings,
-          btcChange: `${+btcPct >= 0 ? "+" : ""}${btcPct}%`,
-          usdChange: `${+usdPct >= 0 ? "+" : ""}${usdPct}%`,
-          powerStatus: "Active",
-          earningsChange: `${+earnPct >= 0 ? "+" : ""}${earnPct}%`,
-        };
-      });
-
-      // Add new activity every ~9s
-      if (tick % 3 === 0) {
-        const reward = +(Math.random() * 0.0002 + 0.00008).toFixed(5);
-        setActivity((prev) => [
-          { type: "Mining Reward", amount: `+${reward} BTC`, time: "Just now", iconType: "reward" as const },
-          ...prev.slice(0, 4).map((item) => ({
-            ...item,
-            time: ageTime(item.time),
-          })),
-        ]);
-      }
-
-      // Append chart point every ~15s
-      if (tick % 5 === 0) {
-        setChartData((prev) => {
-          const next = [...prev.slice(1)];
-          next.push({
-            day: `Day ${30 + Math.floor(tick / 5)}`,
-            earnings: +(Math.random() * 0.005 + 0.002).toFixed(5),
-            hashrate: +(Math.random() * 20 + 80).toFixed(1),
-          });
-          return next;
-        });
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isConnected]);
-
-  return { stats, activity, chartData, isConnected, btcPrice };
+  return { stats, activePurchases, deposits, withdrawals, chartData, isConnected, btcPrice, hasMining };
 };
-
-function ageTime(t: string): string {
-  if (t === "Just now") return "3 sec ago";
-  if (t.includes("sec")) {
-    const n = parseInt(t) || 3;
-    return n >= 50 ? "1 min ago" : `${n + 10} sec ago`;
-  }
-  if (t.includes("min")) {
-    const n = parseInt(t) || 1;
-    return n >= 55 ? "1 hour ago" : `${n + 2} min ago`;
-  }
-  return t;
-}
