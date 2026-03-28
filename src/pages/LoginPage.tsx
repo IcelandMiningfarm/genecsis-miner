@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Zap, Shield, Coins, ArrowUpRight, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, Zap, Shield, Coins, ArrowUpRight, User, Gift } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,8 +15,10 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -24,18 +26,33 @@ const LoginPage = () => {
     if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
 
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      setReferralCode(ref);
+      setIsSignUp(true);
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        // If referral code provided, update the profile with it
+        if (referralCode && signUpData.user) {
+          await supabase
+            .from("profiles")
+            .update({ referred_by: referralCode.toUpperCase() })
+            .eq("user_id", signUpData.user.id);
+        }
         toast({ title: "Account created!", description: "Check your email to confirm your account." });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
