@@ -58,7 +58,18 @@ Deno.serve(async (req) => {
         .update({ btc_balance: newBalance, updated_at: new Date().toISOString() })
         .eq("user_id", userId);
 
-      if (!updateErr) credited++;
+      if (!updateErr) {
+        credited++;
+        // Log each plan's earning individually for history
+        const userPurchases = activePurchases.filter(p => p.user_id === userId);
+        for (const purchase of userPurchases) {
+          await supabase.from("earnings_history").insert({
+            user_id: userId,
+            amount: purchase.daily_earning,
+            plan_name: purchase.plan_name || "Mining Plan",
+          });
+        }
+      }
     }
 
     // Expire plans that have passed their expiration date

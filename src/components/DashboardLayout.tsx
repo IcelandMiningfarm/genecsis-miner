@@ -2,16 +2,18 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Pickaxe, ArrowDownToLine, ArrowUpFromLine,
-  Settings, LogOut, Menu, X
+  Settings, LogOut, Menu, X, ClipboardList, History
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { label: "Mining Plans", icon: Pickaxe, path: "/plans" },
   { label: "Deposit", icon: ArrowDownToLine, path: "/deposit" },
+  { label: "Start Mining", icon: Pickaxe, path: "/plans" },
   { label: "Withdraw", icon: ArrowUpFromLine, path: "/withdraw" },
+  { label: "Orders", icon: ClipboardList, path: "/orders" },
+  { label: "Earnings History", icon: History, path: "/earnings" },
   { label: "Settings", icon: Settings, path: "/settings" },
 ];
 

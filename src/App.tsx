@@ -11,6 +11,7 @@ import MiningPlans from "./pages/MiningPlans";
 import DepositPage from "./pages/DepositPage";
 import WithdrawPage from "./pages/WithdrawPage";
 import SettingsPage from "./pages/SettingsPage";
+import OrdersPage from "./pages/OrdersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,8 @@ const App = () => (
             <Route path="/deposit" element={<ProtectedRoute><DepositPage /></ProtectedRoute>} />
             <Route path="/withdraw" element={<ProtectedRoute><WithdrawPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+            <Route path="/earnings" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
