@@ -14,7 +14,7 @@ import antminerImg from "@/assets/antminer-s21.png";
 // ── BTC Plans ──────────────────────────────────────────────
 const btcPlans = [
   {
-    name: "Free BTC for 1 day", price: 0, duration: "1 Day", details: [
+    name: "Free BTC for 1 day", price: 0, duration: "1 Day", durationDays: 1, dailyEarning: 0.000001, details: [
       { label: "Contract duration", value: "1 days" },
       { label: "Contract price", value: "$ 0" },
       { label: "Hardware", value: "Antminer S21" },
@@ -25,7 +25,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "NEWBIE", price: 15, duration: "1 Day", details: [
+    name: "NEWBIE", price: 15, duration: "1 Day", durationDays: 1, dailyEarning: 0.0006, details: [
       { label: "Contract duration", value: "1 days" },
       { label: "Contract price", value: "$ 15" },
       { label: "Hardware", value: "Antminer S21" },
@@ -36,7 +36,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "BEGINNER", price: 215, duration: "1 Day", details: [
+    name: "BEGINNER", price: 215, duration: "1 Day", durationDays: 1, dailyEarning: 0.00331, details: [
       { label: "Contract duration", value: "1 days" },
       { label: "Contract price", value: "$ 215" },
       { label: "Hardware", value: "Antminer S21" },
@@ -47,7 +47,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "ADVANCED 3-day plan", price: 2999, duration: "3 Day", details: [
+    name: "ADVANCED 3-day plan", price: 2999, duration: "3 Day", durationDays: 3, dailyEarning: 0.0166, details: [
       { label: "Contract duration", value: "3 days" },
       { label: "Contract price", value: "$ 2,999" },
       { label: "Hardware", value: "Antminer S21" },
@@ -58,7 +58,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "BASIC", price: 360, duration: "365 Day", details: [
+    name: "BASIC", price: 360, duration: "365 Day", durationDays: 365, dailyEarning: 0.00063, details: [
       { label: "Contract duration", value: "365 days" },
       { label: "Hardware", value: "Antminer S21" },
       { label: "Daily Mining", value: "0.00063 BTC (≈ $ 44.11)" },
@@ -68,7 +68,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "ECONOMY", price: 770, duration: "365 Day", details: [
+    name: "ECONOMY", price: 770, duration: "365 Day", durationDays: 365, dailyEarning: 0.00162, details: [
       { label: "Contract duration", value: "365 days" },
       { label: "Hardware", value: "Antminer S21" },
       { label: "Daily Mining", value: "0.00162 BTC (≈ $ 113.43)" },
@@ -78,7 +78,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "STANDARD", price: 2350, duration: "365 Day", details: [
+    name: "STANDARD", price: 2350, duration: "365 Day", durationDays: 365, dailyEarning: 0.00591, details: [
       { label: "Contract duration", value: "365 days" },
       { label: "Hardware", value: "Antminer S21" },
       { label: "Daily Mining", value: "0.00591 BTC (≈ $ 413.82)" },
@@ -88,7 +88,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "SENIOR", price: 6580, duration: "365 Day", details: [
+    name: "SENIOR", price: 6580, duration: "365 Day", durationDays: 365, dailyEarning: 0.02603, details: [
       { label: "Contract duration", value: "365 days" },
       { label: "Hardware", value: "Antminer S21" },
       { label: "Daily Mining", value: "0.02603 BTC (≈ $ 1,822.64)" },
@@ -98,7 +98,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "ADVANCED", price: 13860, duration: "365 Day", details: [
+    name: "ADVANCED", price: 13860, duration: "365 Day", durationDays: 365, dailyEarning: 0.05529, details: [
       { label: "Contract duration", value: "365 days" },
       { label: "Hardware", value: "Antminer S21" },
       { label: "Daily Mining", value: "0.05529 BTC (≈ $ 3,871.44)" },
@@ -108,7 +108,7 @@ const btcPlans = [
     ],
   },
   {
-    name: "LUXURIOUS", price: 32000, duration: "365 Day", details: [
+    name: "LUXURIOUS", price: 32000, duration: "365 Day", durationDays: 365, dailyEarning: 0.14815, details: [
       { label: "Contract duration", value: "365 days" },
       { label: "Hardware", value: "Antminer S21" },
       { label: "Daily Mining", value: "0.14815 BTC (≈ $ 10,373.56)" },
@@ -118,11 +118,10 @@ const btcPlans = [
     ],
   },
 ];
-
 // ── USDT Plans ─────────────────────────────────────────────
 const usdtPlans = [
   {
-    name: "GPT Beginner Strategy - Zero Risk", price: 50, duration: "1 Day", details: [
+    name: "GPT Beginner Strategy - Zero Risk", price: 50, duration: "1 Day", durationDays: 1, dailyEarning: 55, details: [
       { label: "Fund Operation", value: "Intelligent Quantitative Trading" },
       { label: "Contract duration", value: "1 day" },
       { label: "Daily earnings", value: "55 USDT" },
@@ -132,7 +131,7 @@ const usdtPlans = [
     ],
   },
   {
-    name: "GPT Robust Strategy - Zero Risk", price: 200, duration: "1 Day", details: [
+    name: "GPT Robust Strategy - Zero Risk", price: 200, duration: "1 Day", durationDays: 1, dailyEarning: 208, details: [
       { label: "Fund Operation", value: "Intelligent Quantitative Trading" },
       { label: "Contract duration", value: "1 day" },
       { label: "Daily earnings", value: "208 USDT" },
@@ -141,7 +140,7 @@ const usdtPlans = [
     ],
   },
   {
-    name: "STANDARD Strategy - Zero Risk", price: 3000, duration: "3 Day", details: [
+    name: "STANDARD Strategy - Zero Risk", price: 3000, duration: "3 Day", durationDays: 3, dailyEarning: 1000, details: [
       { label: "Fund Operation", value: "Intelligent Quantitative Trading" },
       { label: "Contract duration", value: "3 day" },
       { label: "Daily earnings", value: "1,000 USDT" },
@@ -152,7 +151,7 @@ const usdtPlans = [
     ],
   },
   {
-    name: "GPT Advanced Strategy - Zero Risk", price: 5000, duration: "1 Day", details: [
+    name: "GPT Advanced Strategy - Zero Risk", price: 5000, duration: "1 Day", durationDays: 1, dailyEarning: 2500, details: [
       { label: "Fund Operation", value: "Intelligent Quantitative Trading" },
       { label: "Contract duration", value: "1 day" },
       { label: "Daily rate of return", value: "50%" },
@@ -162,7 +161,7 @@ const usdtPlans = [
     ],
   },
   {
-    name: "GPT Champion Strategy - Zero Risk", price: 10000, duration: "3 Day", details: [
+    name: "GPT Champion Strategy - Zero Risk", price: 10000, duration: "3 Day", durationDays: 3, dailyEarning: 2000, details: [
       { label: "Fund Operation", value: "Intelligent Quantitative Trading" },
       { label: "Contract duration", value: "3 day" },
       { label: "Daily rate of return", value: "20%" },
