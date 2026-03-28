@@ -19,9 +19,18 @@ const DepositPage = () => {
   const [deposits, setDeposits] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
+  const [planInfo, setPlanInfo] = useState<{
+    planName?: string; planPrice?: number; planType?: string; planDuration?: string;
+    dailyEarning?: number; durationDays?: number;
+  } | null>(null);
+
   useEffect(() => {
-    const state = location.state as { planName?: string; planPrice?: number; planType?: string; planDuration?: string } | null;
+    const state = location.state as {
+      planName?: string; planPrice?: number; planType?: string; planDuration?: string;
+      dailyEarning?: number; durationDays?: number;
+    } | null;
     if (state?.planName) {
+      setPlanInfo(state);
       setSelectedCrypto(state.planType === "USDT" ? "USDT" : state.planType === "ETH" ? "ETH" : state.planType === "XRP" ? "XRP" : state.planType === "BNB" ? "BNB" : "BTC");
       setAmount(String(state.planPrice ?? ""));
       toast({
@@ -79,8 +88,28 @@ const DepositPage = () => {
         status: "pending",
       });
       if (error) throw error;
+
+      // Create purchase record if plan info exists
+      if (planInfo?.planName && planInfo?.dailyEarning !== undefined) {
+        const durationDays = planInfo.durationDays ?? 1;
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+        await supabase.from("user_purchases").insert({
+          user_id: user.id,
+          plan_name: planInfo.planName,
+          plan_price: planInfo.planPrice ?? 0,
+          plan_type: planInfo.planType ?? "BTC",
+          daily_earning: planInfo.dailyEarning,
+          duration_days: durationDays,
+          expires_at: expiresAt.toISOString(),
+          status: "pending",
+        });
+      }
+
       toast({ title: "Deposit submitted", description: "Your deposit is pending confirmation." });
       setAmount("");
+      setPlanInfo(null);
       // Reload deposits
       const { data } = await supabase
         .from("deposits")

@@ -73,6 +73,8 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          referral_code: string | null
+          referred_by: string | null
           updated_at: string
           user_id: string
           username: string | null
@@ -81,6 +83,8 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -89,9 +93,38 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          bonus_amount: number
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          bonus_amount?: number
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          bonus_amount?: number
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+          status?: string
         }
         Relationships: []
       }
