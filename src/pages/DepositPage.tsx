@@ -122,6 +122,7 @@ const DepositPage = () => {
               ))}
             </div>
 
+            <label className="text-sm text-muted-foreground mb-1 block">Network: <span className="text-foreground font-medium">{networkLabels[selectedCrypto]}</span></label>
             <label className="text-sm text-muted-foreground mb-2 block">Deposit Address</label>
             <div className="flex gap-2">
               <Input value={walletAddresses[selectedCrypto]} readOnly className="bg-secondary border-border font-mono text-xs" />
