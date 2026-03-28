@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      earnings_history: {
+        Row: {
+          amount: number
+          credited_at: string
+          id: string
+          plan_name: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          credited_at?: string
+          id?: string
+          plan_name: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          credited_at?: string
+          id?: string
+          plan_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
