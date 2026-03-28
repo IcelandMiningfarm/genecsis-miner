@@ -111,6 +111,20 @@ const LoginPage = () => {
                 </div>
               </div>
             )}
+            {isSignUp && (
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">Referral Code (optional)</label>
+                <div className="relative">
+                  <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    placeholder="Enter referral code"
+                    className="pl-10 bg-secondary border-border font-mono uppercase"
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
