@@ -106,12 +106,12 @@ const DepositPage = () => {
         <div className="grid lg:grid-cols-2 gap-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
             <h3 className="text-foreground font-semibold mb-4">Select Currency</h3>
-            <div className="flex gap-3 mb-6">
-              {(["BTC", "USDT"] as const).map((crypto) => (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {(["BTC", "USDT", "ETH", "XRP", "BNB"] as const).map((crypto) => (
                 <button
                   key={crypto}
                   onClick={() => setSelectedCrypto(crypto)}
-                  className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                     selectedCrypto === crypto
                       ? "gradient-primary text-primary-foreground glow-primary"
                       : "bg-secondary text-muted-foreground hover:text-foreground"
