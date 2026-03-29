@@ -83,8 +83,8 @@ const LoginPage = () => {
         >
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold tracking-tight">
-              <span className="text-accent glow-text-accent">CRYPTO</span>
-              <span className="text-foreground">MINE</span>
+              <span className="text-accent glow-text-accent">Genesis</span>
+              <span className="text-foreground"> Miner Pro</span>
             </h1>
             <div className="h-0.5 w-16 gradient-primary mx-auto mt-3 rounded-full" />
           </div>

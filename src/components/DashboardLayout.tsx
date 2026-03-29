@@ -2,8 +2,9 @@ import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Pickaxe, ArrowDownToLine, ArrowUpFromLine,
-  Settings, LogOut, Menu, X, ClipboardList, History, Users
+  Settings, LogOut, Menu, X, ClipboardList, History, Users, ShieldCheck
 } from "lucide-react";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -23,6 +24,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
+  const { isAdmin } = useAdminCheck();
 
   const handleLogout = async () => {
     await signOut();
@@ -39,8 +41,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center justify-between">
             <h1 className="text-xl font-bold">
-              <span className="text-accent">CRYPTO</span>
-              <span className="text-foreground">MINE</span>
+              <span className="text-accent">Genesis</span>
+              <span className="text-foreground"> Miner Pro</span>
             </h1>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground">
               <X className="h-5 w-5" />
@@ -48,7 +50,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
           </div>
 
           <nav className="flex-1 px-3 space-y-1">
-            {navItems.map((item) => {
+            {[...navItems, ...(isAdmin ? [{ label: "Admin Panel", icon: ShieldCheck, path: "/admin" }] : [])].map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <button
