@@ -85,7 +85,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
         <div className="fixed inset-0 bg-background/80 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 flex flex-col">
         <header className="h-14 border-b border-border flex items-center px-4 lg:px-6 sticky top-0 bg-background/80 backdrop-blur-lg z-30">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden mr-3 text-muted-foreground">
             <Menu className="h-5 w-5" />
@@ -97,9 +97,22 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
           </div>
         </header>
 
-        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+        <div className="flex-1 p-4 lg:p-6 max-w-7xl mx-auto w-full">
           {children}
         </div>
+
+        <footer className="border-t border-border bg-card/50 backdrop-blur-sm px-4 lg:px-6 py-4">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+            <p>© {new Date().getFullYear()} Genesis Miner Pro. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <span>Cloud Mining Platform</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline">Secure & Reliable</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline">24/7 Mining</span>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
