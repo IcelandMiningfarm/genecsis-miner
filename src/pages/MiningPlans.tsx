@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Bitcoin, DollarSign, ShieldCheck, Clock, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
