@@ -327,6 +327,26 @@ const MiningPlans = () => {
     if (plan.plan.price === 0 && user) {
       setPurchasingFree(true);
       try {
+        // Check if user already has a free plan (active or expired)
+        const { data: existingFree, error: checkError } = await supabase
+          .from("user_purchases")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("plan_price", 0)
+          .limit(1);
+
+        if (checkError) throw checkError;
+
+        if (existingFree && existingFree.length > 0) {
+          toast({
+            title: "Limit reached",
+            description: "You can only activate one free plan. Purchase a paid plan to continue mining.",
+            variant: "destructive",
+          });
+          setPurchasingFree(false);
+          return;
+        }
+
         const durationDays = plan.plan.durationDays;
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + durationDays);
