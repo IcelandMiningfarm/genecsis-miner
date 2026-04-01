@@ -18,6 +18,26 @@ const DepositPage = () => {
   const [amount, setAmount] = useState("");
   const [deposits, setDeposits] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [btcPrice, setBtcPrice] = useState(63000);
+
+  // Fetch live BTC price
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+          { headers: { "x-cg-demo-api-key": "CG-9kLivg9HmUeX7VwDSgehcpLj" } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.bitcoin?.usd) setBtcPrice(data.bitcoin.usd);
+        }
+      } catch { /* fallback */ }
+    };
+    load();
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const [planInfo, setPlanInfo] = useState<{
     planName?: string; planPrice?: number; planType?: string; planDuration?: string;
@@ -172,7 +192,7 @@ const DepositPage = () => {
             <h3 className="text-foreground font-semibold mb-4">Submit Deposit</h3>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Amount ({selectedCrypto})</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">Amount (USD)</label>
                 <Input
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -180,6 +200,11 @@ const DepositPage = () => {
                   type="number"
                   className="bg-secondary border-border font-mono"
                 />
+                {amount && parseFloat(amount) > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1.5 font-mono">
+                    ≈ ₿{(parseFloat(amount) / btcPrice).toFixed(8)} at ${btcPrice.toLocaleString()}/BTC
+                  </p>
+                )}
               </div>
               <Button
                 onClick={handleSubmitDeposit}
@@ -202,7 +227,8 @@ const DepositPage = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-muted-foreground border-b border-border">
-                    <th className="text-left py-3 font-medium">Amount</th>
+                    <th className="text-left py-3 font-medium">Amount (USD)</th>
+                    <th className="text-left py-3 font-medium">BTC Equivalent</th>
                     <th className="text-left py-3 font-medium">Currency</th>
                     <th className="text-left py-3 font-medium">Status</th>
                     <th className="text-left py-3 font-medium">Date</th>
@@ -211,7 +237,8 @@ const DepositPage = () => {
                 <tbody>
                   {deposits.map((tx) => (
                     <tr key={tx.id} className="border-b border-border/50">
-                      <td className="py-3 font-mono text-foreground">{tx.amount}</td>
+                      <td className="py-3 font-mono text-foreground">${tx.amount}</td>
+                      <td className="py-3 font-mono text-accent">₿{(Number(tx.amount) / btcPrice).toFixed(8)}</td>
                       <td className="py-3 text-foreground">{tx.currency}</td>
                       <td className="py-3">
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${

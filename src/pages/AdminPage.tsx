@@ -9,6 +9,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 
+const fetchBtcPrice = async (): Promise<number> => {
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      { headers: { "x-cg-demo-api-key": "CG-9kLivg9HmUeX7VwDSgehcpLj" } }
+    );
+    if (!res.ok) return 63000;
+    const data = await res.json();
+    return data.bitcoin?.usd ?? 63000;
+  } catch {
+    return 63000;
+  }
+};
+
 const AdminPage = () => {
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
@@ -19,6 +33,7 @@ const AdminPage = () => {
   const [purchases, setPurchases] = useState<any[]>([]);
   const [balances, setBalances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [btcPrice, setBtcPrice] = useState(63000);
 
   const loadAll = async () => {
     setLoading(true);
@@ -38,7 +53,10 @@ const AdminPage = () => {
   };
 
   useEffect(() => {
-    if (isAdmin) loadAll();
+    if (isAdmin) {
+      loadAll();
+      fetchBtcPrice().then(setBtcPrice);
+    }
   }, [isAdmin]);
 
   const getBalance = (userId: string) => balances.find((b) => b.user_id === userId);
@@ -48,12 +66,16 @@ const AdminPage = () => {
     const { error } = await supabase.from("deposits").update({ status: "confirmed" }).eq("id", deposit.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
 
-    // Credit user balance
+    // Credit user balance — convert USD amount to BTC using live price
     const bal = getBalance(deposit.user_id);
     if (bal) {
-      const field = deposit.currency === "BTC" ? "btc_balance" : "usdt_balance";
+      const currentPrice = await fetchBtcPrice();
+      setBtcPrice(currentPrice);
+      // All deposits are converted to BTC balance
+      const btcAmount = Number(deposit.amount) / currentPrice;
+      const newBtcBalance = Number(bal.btc_balance) + btcAmount;
       await supabase.from("user_balances").update({
-        [field]: Number(bal[field]) + Number(deposit.amount),
+        btc_balance: newBtcBalance,
         updated_at: new Date().toISOString(),
       }).eq("user_id", deposit.user_id);
     }
@@ -61,7 +83,7 @@ const AdminPage = () => {
     // Activate any pending purchases for this user
     await supabase.from("user_purchases").update({ status: "active" }).eq("user_id", deposit.user_id).eq("status", "pending");
 
-    toast({ title: "Deposit approved & balance credited" });
+    toast({ title: "Deposit approved", description: `$${deposit.amount} converted to ₿${(Number(deposit.amount) / btcPrice).toFixed(8)} and credited` });
     loadAll();
   };
 
