@@ -33,6 +33,7 @@ const Dashboard = () => {
     {
       label: "Daily Earnings", value: stats.dailyEarnings, prefix: "₿ ", decimals: 6,
       icon: TrendingUp, glowClass: "",
+      subValue: btcPrice.price > 0 ? `≈ $${(stats.dailyEarnings * btcPrice.price).toFixed(2)}` : undefined,
     },
   ];
 
