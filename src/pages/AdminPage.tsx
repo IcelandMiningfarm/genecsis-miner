@@ -66,12 +66,16 @@ const AdminPage = () => {
     const { error } = await supabase.from("deposits").update({ status: "confirmed" }).eq("id", deposit.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
 
-    // Credit user balance
+    // Credit user balance — convert USD amount to BTC using live price
     const bal = getBalance(deposit.user_id);
     if (bal) {
-      const field = deposit.currency === "BTC" ? "btc_balance" : "usdt_balance";
+      const currentPrice = await fetchBtcPrice();
+      setBtcPrice(currentPrice);
+      // All deposits are converted to BTC balance
+      const btcAmount = Number(deposit.amount) / currentPrice;
+      const newBtcBalance = Number(bal.btc_balance) + btcAmount;
       await supabase.from("user_balances").update({
-        [field]: Number(bal[field]) + Number(deposit.amount),
+        btc_balance: newBtcBalance,
         updated_at: new Date().toISOString(),
       }).eq("user_id", deposit.user_id);
     }
@@ -79,7 +83,7 @@ const AdminPage = () => {
     // Activate any pending purchases for this user
     await supabase.from("user_purchases").update({ status: "active" }).eq("user_id", deposit.user_id).eq("status", "pending");
 
-    toast({ title: "Deposit approved & balance credited" });
+    toast({ title: "Deposit approved", description: `$${deposit.amount} converted to ₿${(Number(deposit.amount) / btcPrice).toFixed(8)} and credited` });
     loadAll();
   };
 

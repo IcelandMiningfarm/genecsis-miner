@@ -192,7 +192,7 @@ const DepositPage = () => {
             <h3 className="text-foreground font-semibold mb-4">Submit Deposit</h3>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-muted-foreground mb-1.5 block">Amount ({selectedCrypto})</label>
+                <label className="text-sm text-muted-foreground mb-1.5 block">Amount (USD)</label>
                 <Input
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
@@ -200,6 +200,11 @@ const DepositPage = () => {
                   type="number"
                   className="bg-secondary border-border font-mono"
                 />
+                {amount && parseFloat(amount) > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1.5 font-mono">
+                    ≈ ₿{(parseFloat(amount) / btcPrice).toFixed(8)} at ${btcPrice.toLocaleString()}/BTC
+                  </p>
+                )}
               </div>
               <Button
                 onClick={handleSubmitDeposit}
