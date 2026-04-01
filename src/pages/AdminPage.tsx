@@ -9,6 +9,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 
+const fetchBtcPrice = async (): Promise<number> => {
+  try {
+    const res = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      { headers: { "x-cg-demo-api-key": "CG-9kLivg9HmUeX7VwDSgehcpLj" } }
+    );
+    if (!res.ok) return 63000;
+    const data = await res.json();
+    return data.bitcoin?.usd ?? 63000;
+  } catch {
+    return 63000;
+  }
+};
+
 const AdminPage = () => {
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
@@ -19,6 +33,7 @@ const AdminPage = () => {
   const [purchases, setPurchases] = useState<any[]>([]);
   const [balances, setBalances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [btcPrice, setBtcPrice] = useState(63000);
 
   const loadAll = async () => {
     setLoading(true);
