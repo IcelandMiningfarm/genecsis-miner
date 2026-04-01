@@ -53,7 +53,10 @@ const AdminPage = () => {
   };
 
   useEffect(() => {
-    if (isAdmin) loadAll();
+    if (isAdmin) {
+      loadAll();
+      fetchBtcPrice().then(setBtcPrice);
+    }
   }, [isAdmin]);
 
   const getBalance = (userId: string) => balances.find((b) => b.user_id === userId);
