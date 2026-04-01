@@ -18,6 +18,26 @@ const DepositPage = () => {
   const [amount, setAmount] = useState("");
   const [deposits, setDeposits] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [btcPrice, setBtcPrice] = useState(63000);
+
+  // Fetch live BTC price
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+          { headers: { "x-cg-demo-api-key": "CG-9kLivg9HmUeX7VwDSgehcpLj" } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.bitcoin?.usd) setBtcPrice(data.bitcoin.usd);
+        }
+      } catch { /* fallback */ }
+    };
+    load();
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const [planInfo, setPlanInfo] = useState<{
     planName?: string; planPrice?: number; planType?: string; planDuration?: string;
