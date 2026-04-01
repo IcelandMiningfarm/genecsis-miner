@@ -227,7 +227,8 @@ const DepositPage = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-muted-foreground border-b border-border">
-                    <th className="text-left py-3 font-medium">Amount</th>
+                    <th className="text-left py-3 font-medium">Amount (USD)</th>
+                    <th className="text-left py-3 font-medium">BTC Equivalent</th>
                     <th className="text-left py-3 font-medium">Currency</th>
                     <th className="text-left py-3 font-medium">Status</th>
                     <th className="text-left py-3 font-medium">Date</th>
@@ -236,7 +237,8 @@ const DepositPage = () => {
                 <tbody>
                   {deposits.map((tx) => (
                     <tr key={tx.id} className="border-b border-border/50">
-                      <td className="py-3 font-mono text-foreground">{tx.amount}</td>
+                      <td className="py-3 font-mono text-foreground">${tx.amount}</td>
+                      <td className="py-3 font-mono text-accent">₿{(Number(tx.amount) / btcPrice).toFixed(8)}</td>
                       <td className="py-3 text-foreground">{tx.currency}</td>
                       <td className="py-3">
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
