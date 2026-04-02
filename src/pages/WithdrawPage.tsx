@@ -159,7 +159,7 @@ const WithdrawPage = () => {
               </div>
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
                 <p className="text-sm text-foreground font-medium">Processing Time</p>
-                <p className="text-xs text-muted-foreground mt-1">After the 72-hour pending period, withdrawals are processed within 24 hours after admin approval.</p>
+                <p className="text-xs text-muted-foreground mt-1">After the 24-hour pending period, withdrawals are processed within 24 hours after admin approval.</p>
               </div>
               <div className="p-4 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-1.5 mb-1">
