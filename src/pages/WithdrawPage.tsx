@@ -74,7 +74,7 @@ const WithdrawPage = () => {
         status: "pending",
       });
       if (error) throw error;
-      toast({ title: "Withdrawal requested", description: "Your withdrawal will be processed after 72 hours pending period." });
+      toast({ title: "Withdrawal requested", description: "Your withdrawal will be processed after 24 hours pending period." });
       setAmount("");
       setWalletAddress("");
       const { data } = await supabase
