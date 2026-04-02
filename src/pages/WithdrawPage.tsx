@@ -153,7 +153,7 @@ const WithdrawPage = () => {
               <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Timer className="h-3.5 w-3.5 text-accent" />
-                  <p className="text-sm text-foreground font-medium">72-Hour Pending Period</p>
+                  <p className="text-sm text-foreground font-medium">24-Hour Pending Period</p>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">All withdrawals are held for 24 hours before being processed by admin for security purposes.</p>
               </div>
