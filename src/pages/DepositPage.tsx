@@ -127,9 +127,6 @@ const DepositPage = () => {
         });
       }
 
-      toast({ title: "Deposit submitted", description: "Your deposit is pending confirmation." });
-      setAmount("");
-      setPlanInfo(null);
       // Reload deposits
       const { data } = await supabase
         .from("deposits")
@@ -137,6 +134,10 @@ const DepositPage = () => {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       setDeposits(data ?? []);
+      setAmount("");
+      setPlanInfo(null);
+      setShowReceipt(true);
+      setLastDeposit({ amount: parseFloat(amount), currency: selectedCrypto, btcEquivalent: parseFloat(amount) / btcPrice });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
