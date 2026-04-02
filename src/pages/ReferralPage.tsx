@@ -103,7 +103,7 @@ const ReferralPage = () => {
             <ol className="text-xs text-muted-foreground mt-2 space-y-1 list-decimal list-inside">
               <li>Share your referral code or link with friends</li>
               <li>They sign up using your code</li>
-              <li>You receive $20 USDT credited to your balance</li>
+              <li>You both receive $20 USDT credited to your balances</li>
             </ol>
           </div>
         </motion.div>
