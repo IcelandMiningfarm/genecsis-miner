@@ -22,6 +22,8 @@ const DepositPage = () => {
   const [btcPrice, setBtcPrice] = useState(63000);
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastDeposit, setLastDeposit] = useState<{ amount: number; currency: string; btcEquivalent: number } | null>(null);
+  const [showApprovalReceipt, setShowApprovalReceipt] = useState(false);
+  const [approvedDeposit, setApprovedDeposit] = useState<{ amount: number; currency: string; btcEquivalent: number; date: string } | null>(null);
 
   // Fetch live BTC price
   useEffect(() => {
@@ -76,7 +78,42 @@ const DepositPage = () => {
       setDeposits(data ?? []);
     };
     load();
-  }, [user]);
+
+    // Realtime: listen for deposit approval/rejection
+    const channel = supabase
+      .channel('user-deposits')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'deposits',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          // Reload the list
+          load();
+          if (updated.status === 'confirmed') {
+            const btcAmt = Number(updated.amount) / btcPrice;
+            setApprovedDeposit({
+              amount: Number(updated.amount),
+              currency: updated.currency,
+              btcEquivalent: btcAmt,
+              date: updated.created_at,
+            });
+            setShowApprovalReceipt(true);
+          } else if (updated.status === 'rejected') {
+            toast({ title: "Deposit Rejected", description: `Your $${updated.amount} deposit was rejected.`, variant: "destructive" });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, btcPrice]);
 
   const walletAddresses = {
     BTC: "bc1qgwcsk7ejyq3u5747xa9r49lyn3a3dpk7e2xx26",
@@ -300,6 +337,61 @@ const DepositPage = () => {
               </div>
               <p className="text-xs text-muted-foreground text-center">Your deposit will be reviewed and approved by our team.</p>
               <Button onClick={() => setShowReceipt(false)} className="w-full gradient-primary text-primary-foreground">
+                Done
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Approval Receipt Dialog */}
+      <Dialog open={showApprovalReceipt} onOpenChange={setShowApprovalReceipt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              Deposit Approved!
+            </DialogTitle>
+            <DialogDescription>Your deposit has been confirmed and credited to your balance</DialogDescription>
+          </DialogHeader>
+          {approvedDeposit && (
+            <div className="space-y-4 py-2">
+              <div className="flex justify-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"
+                >
+                  <CheckCircle2 className="h-8 w-8 text-primary" />
+                </motion.div>
+              </div>
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Amount Deposited</span>
+                  <span className="font-mono font-semibold text-foreground">${approvedDeposit.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">BTC Credited</span>
+                  <span className="font-mono font-semibold text-primary">₿{approvedDeposit.btcEquivalent.toFixed(8)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Network</span>
+                  <span className="text-foreground">{approvedDeposit.currency}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    <CheckCircle2 className="h-3 w-3" /> Confirmed
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Submitted</span>
+                  <span className="text-foreground">{new Date(approvedDeposit.date).toLocaleString()}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">Your BTC balance has been updated. Check your dashboard for the latest balance.</p>
+              <Button onClick={() => setShowApprovalReceipt(false)} className="w-full gradient-primary text-primary-foreground">
                 Done
               </Button>
             </div>
