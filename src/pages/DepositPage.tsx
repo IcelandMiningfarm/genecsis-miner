@@ -343,6 +343,61 @@ const DepositPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Approval Receipt Dialog */}
+      <Dialog open={showApprovalReceipt} onOpenChange={setShowApprovalReceipt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              Deposit Approved!
+            </DialogTitle>
+            <DialogDescription>Your deposit has been confirmed and credited to your balance</DialogDescription>
+          </DialogHeader>
+          {approvedDeposit && (
+            <div className="space-y-4 py-2">
+              <div className="flex justify-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"
+                >
+                  <CheckCircle2 className="h-8 w-8 text-primary" />
+                </motion.div>
+              </div>
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Amount Deposited</span>
+                  <span className="font-mono font-semibold text-foreground">${approvedDeposit.amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">BTC Credited</span>
+                  <span className="font-mono font-semibold text-primary">₿{approvedDeposit.btcEquivalent.toFixed(8)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Network</span>
+                  <span className="text-foreground">{approvedDeposit.currency}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    <CheckCircle2 className="h-3 w-3" /> Confirmed
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Submitted</span>
+                  <span className="text-foreground">{new Date(approvedDeposit.date).toLocaleString()}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground text-center">Your BTC balance has been updated. Check your dashboard for the latest balance.</p>
+              <Button onClick={() => setShowApprovalReceipt(false)} className="w-full gradient-primary text-primary-foreground">
+                Done
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
