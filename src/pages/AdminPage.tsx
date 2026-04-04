@@ -98,9 +98,19 @@ const AdminPage = () => {
   };
 
   const approveWithdrawal = async (withdrawal: any) => {
+    // Deduct the BTC from user balance first
+    const bal = getBalance(withdrawal.user_id);
+    if (bal) {
+      const newBtcBalance = Math.max(0, Number(bal.btc_balance) - Number(withdrawal.amount));
+      await supabase.from("user_balances").update({
+        btc_balance: newBtcBalance,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", withdrawal.user_id);
+    }
+
     const { error } = await supabase.from("withdrawals").update({ status: "approved" }).eq("id", withdrawal.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Withdrawal approved" });
+    toast({ title: "Withdrawal approved", description: `${withdrawal.amount} BTC deducted from user balance` });
     loadAll();
   };
 

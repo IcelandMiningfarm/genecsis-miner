@@ -46,12 +46,20 @@ const LoginPage = () => {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        // If referral code provided, update the profile with it
-        if (referralCode && signUpData.user) {
-          await supabase
-            .from("profiles")
-            .update({ referred_by: referralCode.toUpperCase() })
-            .eq("user_id", signUpData.user.id);
+
+        // Update profile with username and referral code if provided
+        if (signUpData.user) {
+          const updates: Record<string, string> = {};
+          if (username.trim()) updates.username = username.trim();
+          if (referralCode.trim()) updates.referred_by = referralCode.trim().toUpperCase();
+          if (Object.keys(updates).length > 0) {
+            // Small delay to ensure the profile trigger has fired
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await supabase
+              .from("profiles")
+              .update(updates)
+              .eq("user_id", signUpData.user.id);
+          }
         }
         toast({ title: "Account created!", description: "Check your email to confirm your account." });
       } else {

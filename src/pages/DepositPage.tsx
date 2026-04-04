@@ -283,9 +283,13 @@ const DepositPage = () => {
                       <td className="py-3 text-foreground">{tx.currency}</td>
                       <td className="py-3">
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-                          tx.status === "confirmed" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent"
+                          tx.status === "confirmed" ? "bg-primary/10 text-primary" :
+                          tx.status === "rejected" ? "bg-destructive/10 text-destructive" :
+                          "bg-accent/10 text-accent"
                         }`}>
-                          {tx.status === "confirmed" ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                          {tx.status === "confirmed" ? <CheckCircle2 className="h-3 w-3" /> :
+                           tx.status === "rejected" ? <Clock className="h-3 w-3" /> :
+                           <Clock className="h-3 w-3" />}
                           {tx.status}
                         </span>
                       </td>

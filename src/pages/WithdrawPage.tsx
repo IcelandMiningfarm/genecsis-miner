@@ -202,11 +202,11 @@ const WithdrawPage = () => {
                         <td className="py-3 font-mono text-muted-foreground text-xs">{tx.wallet_address.slice(0, 10)}...{tx.wallet_address.slice(-4)}</td>
                         <td className="py-3">
                           <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-                            tx.status === "completed" ? "bg-primary/10 text-primary" :
+                            tx.status === "approved" ? "bg-primary/10 text-primary" :
                             tx.status === "pending" ? "bg-accent/10 text-accent" :
                             "bg-destructive/10 text-destructive"
                           }`}>
-                            {tx.status === "completed" ? <CheckCircle2 className="h-3 w-3" /> :
+                            {tx.status === "approved" ? <CheckCircle2 className="h-3 w-3" /> :
                              tx.status === "pending" ? <Clock className="h-3 w-3" /> :
                              <XCircle className="h-3 w-3" />}
                             {tx.status}
