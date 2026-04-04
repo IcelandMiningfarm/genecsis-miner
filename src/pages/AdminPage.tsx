@@ -64,6 +64,7 @@ const AdminPage = () => {
 
   const getBalance = (userId: string) => balances.find((b) => b.user_id === userId);
   const getProfile = (userId: string) => profiles.find((p) => p.user_id === userId);
+  const getReferralCount = (userId: string) => referrals.filter((r) => r.referrer_id === userId).length;
 
   const approveDeposit = async (deposit: any) => {
     const { error } = await supabase.from("deposits").update({ status: "confirmed" }).eq("id", deposit.id);
