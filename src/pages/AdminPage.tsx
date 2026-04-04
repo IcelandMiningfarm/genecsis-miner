@@ -38,7 +38,7 @@ const AdminPage = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    const [p, d, w, pu, b] = await Promise.all([
+    const [p, d, w, pu, b, r] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("deposits").select("*").order("created_at", { ascending: false }),
       supabase.from("withdrawals").select("*").order("created_at", { ascending: false }),
