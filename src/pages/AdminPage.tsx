@@ -164,8 +164,9 @@ const AdminPage = () => {
                         <td className="py-3 text-muted-foreground">{p.username ?? "—"}</td>
                         <td className="py-3 font-mono text-accent">₿{bal?.btc_balance?.toFixed(6) ?? "0"}</td>
                         <td className="py-3 font-mono text-primary">${bal?.usdt_balance?.toFixed(2) ?? "0"}</td>
-                        <td className="py-3 font-mono text-xs">{p.referral_code ?? "—"}</td>
-                        <td className="py-3 text-muted-foreground text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
+                         <td className="py-3 font-mono text-xs">{p.referral_code ?? "—"}</td>
+                         <td className="py-3 font-mono text-xs text-accent">{getReferralCount(p.user_id)}</td>
+                         <td className="py-3 text-muted-foreground text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
                       </tr>
                     );
                   })}
