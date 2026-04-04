@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     // Get all active purchases that haven't expired
     const { data: activePurchases, error: fetchError } = await supabase
       .from("user_purchases")
-      .select("user_id, daily_earning, plan_name")
+      .select("user_id, daily_earning, plan_name, plan_type")
       .eq("status", "active")
       .gt("expires_at", new Date().toISOString());
 
@@ -34,28 +34,45 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Aggregate earnings per user
-    const earningsByUser: Record<string, number> = {};
+    // Aggregate earnings per user, separated by type
+    const earningsByUser: Record<string, { btc: number; usdt: number }> = {};
     for (const p of activePurchases) {
-      earningsByUser[p.user_id] = (earningsByUser[p.user_id] || 0) + p.daily_earning;
+      if (!earningsByUser[p.user_id]) {
+        earningsByUser[p.user_id] = { btc: 0, usdt: 0 };
+      }
+      const planType = (p.plan_type || "BTC").toUpperCase();
+      if (planType === "USDT") {
+        earningsByUser[p.user_id].usdt += p.daily_earning;
+      } else {
+        earningsByUser[p.user_id].btc += p.daily_earning;
+      }
     }
 
     let credited = 0;
-    for (const [userId, dailyTotal] of Object.entries(earningsByUser)) {
+    for (const [userId, earnings] of Object.entries(earningsByUser)) {
       // Get current balance
       const { data: balance, error: balErr } = await supabase
         .from("user_balances")
-        .select("btc_balance")
+        .select("btc_balance, usdt_balance")
         .eq("user_id", userId)
         .single();
 
       if (balErr || !balance) continue;
 
-      const newBalance = Number(balance.btc_balance) + dailyTotal;
+      const updates: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (earnings.btc > 0) {
+        updates.btc_balance = Number(balance.btc_balance) + earnings.btc;
+      }
+      if (earnings.usdt > 0) {
+        updates.usdt_balance = Number(balance.usdt_balance) + earnings.usdt;
+      }
 
       const { error: updateErr } = await supabase
         .from("user_balances")
-        .update({ btc_balance: newBalance, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq("user_id", userId);
 
       if (!updateErr) {
