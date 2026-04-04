@@ -32,6 +32,7 @@ const AdminPage = () => {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
   const [balances, setBalances] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [btcPrice, setBtcPrice] = useState(63000);
 
