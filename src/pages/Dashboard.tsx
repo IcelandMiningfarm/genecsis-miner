@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import {
   Bitcoin, DollarSign, TrendingUp, Zap, ArrowUpRight, ArrowDownRight,
-  BarChart3, ShieldAlert
+  BarChart3, ShieldAlert, Pickaxe
 } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line } from "recharts";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,42 @@ import { LiveIndicator } from "@/components/LiveIndicator";
 import { useLiveMiningData } from "@/hooks/useLiveMiningData";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+
+// Animated counter component
+const AnimatedValue = ({ value, prefix = "", suffix = "", decimals = 2 }: { value: number; prefix?: string; suffix?: string; decimals?: number }) => (
+  <motion.span
+    key={value.toFixed(decimals)}
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+  >
+    {prefix}{value.toFixed(decimals)}{suffix}
+  </motion.span>
+);
+
+// Mining pulse ring animation
+const MiningPulse = () => (
+  <div className="relative">
+    <motion.div
+      className="absolute inset-0 rounded-full bg-primary/20"
+      animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
+      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+    />
+    <motion.div
+      className="absolute inset-0 rounded-full bg-primary/10"
+      animate={{ scale: [1, 2.2, 1], opacity: [0.3, 0, 0.3] }}
+      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.3 }}
+    />
+    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center relative z-10">
+      <motion.div
+        animate={{ rotate: [0, 15, -15, 0] }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+      >
+        <Pickaxe className="h-4 w-4 text-primary" />
+      </motion.div>
+    </div>
+  </div>
+);
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -20,20 +56,21 @@ const Dashboard = () => {
   const statCards = [
     {
       label: "BTC Balance", value: stats.btcBalance, prefix: "₿ ", decimals: 6,
-      icon: Bitcoin, glowClass: "glow-accent",
+      icon: Bitcoin, glowClass: "glow-accent", showPulse: false,
     },
     {
       label: "USD Value", value: stats.usdValue, prefix: "$", decimals: 2,
-      icon: DollarSign, glowClass: "",
+      icon: DollarSign, glowClass: "", showPulse: false,
     },
     {
       label: "Mining Power", value: stats.miningPower, suffix: " TH/s", decimals: 1,
-      icon: Zap, glowClass: "glow-primary",
+      icon: Zap, glowClass: "glow-primary", showPulse: hasMining,
     },
     {
       label: "Daily Earnings", value: stats.dailyEarnings, prefix: "₿ ", decimals: 6,
       icon: TrendingUp, glowClass: "",
       subValue: btcPrice.price > 0 ? `≈ $${(stats.dailyEarnings * btcPrice.price).toFixed(2)}` : undefined,
+      showPulse: false,
     },
   ];
 
@@ -70,6 +107,30 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Mining Status Banner */}
+        {hasMining && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-4 border-primary/30 bg-primary/5 flex items-center gap-4"
+          >
+            <MiningPulse />
+            <div className="flex-1">
+              <p className="text-foreground font-semibold text-sm flex items-center gap-2">
+                Mining Active
+                <motion.span
+                  className="inline-block w-2 h-2 rounded-full bg-primary"
+                  animate={{ opacity: [1, 0.3, 1] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                />
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {stats.activePlans} contract{stats.activePlans > 1 ? "s" : ""} running • {stats.miningPower} TH/s total hashrate
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* No Mining Warning */}
         {!hasMining && (
           <motion.div
@@ -100,12 +161,16 @@ const Dashboard = () => {
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-muted-foreground text-sm">{stat.label}</span>
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="h-4 w-4 text-primary" />
-                </div>
+                {stat.showPulse ? (
+                  <MiningPulse />
+                ) : (
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <stat.icon className="h-4 w-4 text-primary" />
+                  </div>
+                )}
               </div>
               <div className="text-2xl font-bold text-foreground font-mono tabular-nums">
-                {stat.prefix}{stat.value.toFixed(stat.decimals)}{stat.suffix}
+                <AnimatedValue value={stat.value} prefix={stat.prefix} suffix={stat.suffix} decimals={stat.decimals} />
               </div>
               {(stat as any).subValue && (
                 <p className="text-xs text-muted-foreground mt-1 font-mono">{(stat as any).subValue}</p>
@@ -142,7 +207,12 @@ const Dashboard = () => {
                       <td className="py-3 font-mono text-primary">{p.daily_earning} {p.plan_type}</td>
                       <td className="py-3 text-muted-foreground">{new Date(p.expires_at).toLocaleDateString()}</td>
                       <td className="py-3">
-                        <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary gap-1">
+                          <motion.span
+                            className="w-1.5 h-1.5 rounded-full bg-primary"
+                            animate={{ opacity: [1, 0.3, 1] }}
+                            transition={{ repeat: Infinity, duration: 1.5 }}
+                          />
                           Active
                         </span>
                       </td>
@@ -154,7 +224,7 @@ const Dashboard = () => {
           </motion.div>
         )}
 
-        {/* Charts - only show if user has active mining */}
+        {/* Charts */}
         {hasMining && chartData.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <motion.div

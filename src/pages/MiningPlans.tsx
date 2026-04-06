@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Bitcoin, DollarSign, ShieldCheck, Clock, Cpu } from "lucide-react";
+import { Check, Bitcoin, DollarSign, ShieldCheck, Clock, Cpu, Wallet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -121,7 +121,7 @@ const btcPlans = [
     ],
   },
 ];
-// ── USDT Plans ─────────────────────────────────────────────
+
 const usdtPlans = [
   {
     name: "GPT Beginner Strategy - Zero Risk", price: 50, duration: "1 Day", durationDays: 1, dailyEarning: 55, details: [
@@ -175,7 +175,6 @@ const usdtPlans = [
   },
 ];
 
-// ── Live activity feed data ────────────────────────────────
 const generateActivity = () => {
   const names = [
     "emi***lio", "880***334", "cal***b67", "ZGV***GVy", "luc***118",
@@ -199,7 +198,6 @@ const generateActivity = () => {
   }));
 };
 
-// ── Pool payouts ───────────────────────────────────────────
 const poolPayouts = [
   { date: "20 hours ago", txId: "946bca6247c4***e8498bf199d7", btc: "6.91701989" },
   { date: "20 hours ago", txId: "offchain***", btc: "39.8202015" },
@@ -213,7 +211,6 @@ const poolPayouts = [
   { date: "3 days ago", txId: "a09f9fd474da***75899309e563", btc: "0.30848167" },
 ];
 
-// ── Scrolling ticker ───────────────────────────────────────
 const ActivityTicker = () => {
   const items = useRef(generateActivity());
   const [offset, setOffset] = useState(0);
@@ -246,7 +243,6 @@ const ActivityTicker = () => {
   );
 };
 
-// ── Plan Card ──────────────────────────────────────────────
 interface PlanCardProps {
   plan: { name: string; price: number; duration: string; durationDays: number; dailyEarning: number; details: { label: string; value: string; link?: boolean }[] };
   type: "BTC" | "USDT";
@@ -259,17 +255,29 @@ const PlanCard = ({ plan, type, index, onBuy }: PlanCardProps) => (
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.05 }}
-    className="glass-card overflow-hidden flex flex-col"
+    className="glass-card overflow-hidden flex flex-col group"
   >
-    {/* Header */}
     <div className="relative p-5 pb-3 text-center">
       <Badge className={`absolute top-3 right-3 ${type === "BTC" ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"}`}>
         {type}
       </Badge>
       {type === "BTC" ? (
-        <img src={antminerImg} alt="Antminer S21" className="h-16 mx-auto mb-3 object-contain" />
+        <motion.img
+          src={antminerImg}
+          alt="Antminer S21"
+          className="h-16 mx-auto mb-3 object-contain"
+          whileHover={{ scale: 1.1, rotate: 2 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        />
       ) : (
-        <div className="h-16 flex items-center justify-center mb-3 text-4xl">💰</div>
+        <motion.div
+          className="h-16 flex items-center justify-center mb-3 text-4xl"
+          whileHover={{ scale: 1.2 }}
+          animate={{ y: [0, -4, 0] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        >
+          💰
+        </motion.div>
       )}
       <h3 className="text-sm font-bold text-foreground leading-tight">{plan.name}</h3>
       <p className="text-xl font-bold text-accent mt-1">
@@ -277,7 +285,6 @@ const PlanCard = ({ plan, type, index, onBuy }: PlanCardProps) => (
       </p>
     </div>
 
-    {/* Details */}
     <div className="flex-1 px-4 pb-4 space-y-0">
       {plan.details.map((d, i) => (
         <div key={i} className="flex items-start gap-2 py-2 border-b border-border/50 last:border-0 text-xs">
@@ -292,13 +299,12 @@ const PlanCard = ({ plan, type, index, onBuy }: PlanCardProps) => (
       ))}
     </div>
 
-    {/* Buy Button */}
     <div className="p-4 pt-0">
       <Button
         onClick={() => onBuy(plan, type)}
-        className="w-full gradient-primary text-primary-foreground glow-primary"
+        className="w-full gradient-primary text-primary-foreground glow-primary group-hover:scale-[1.02] transition-transform"
       >
-        Buy Now
+        Buy Now <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
     </div>
   </motion.div>
@@ -309,47 +315,61 @@ const MiningPlans = () => {
   const navigate = useNavigate();
   const [btcPrice, setBtcPrice] = useState(71076.52);
   const [selectedPlan, setSelectedPlan] = useState<{ plan: PlanCardProps["plan"]; type: "BTC" | "USDT" } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"balance" | "deposit">("balance");
+  const [purchasing, setPurchasing] = useState(false);
+  const [userBalance, setUserBalance] = useState({ btc: 0, usdt: 0 });
 
   const handleBuy = (plan: PlanCardProps["plan"], type: "BTC" | "USDT") => {
     setSelectedPlan({ plan, type });
+    setPaymentMethod(plan.price === 0 ? "balance" : "balance");
   };
 
   const { toast } = useToast();
   const { user } = useAuth();
-  const [purchasingFree, setPurchasingFree] = useState(false);
+
+  // Load user balance
+  const loadBalance = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("user_balances")
+      .select("btc_balance, usdt_balance")
+      .eq("user_id", user.id)
+      .single();
+    if (data) {
+      setUserBalance({ btc: data.btc_balance ?? 0, usdt: data.usdt_balance ?? 0 });
+    }
+  }, [user]);
+
+  useEffect(() => { loadBalance(); }, [loadBalance]);
+
+  const getBalanceInUsd = () => userBalance.btc * btcPrice + userBalance.usdt;
+
+  const canAfford = (price: number) => getBalanceInUsd() >= price;
 
   const handleConfirmPurchase = async () => {
     const plan = selectedPlan;
     setSelectedPlan(null);
-    if (!plan) return;
+    if (!plan || !user) return;
 
-    // Free plans: create purchase directly as active, no deposit needed
-    if (plan.plan.price === 0 && user) {
-      setPurchasingFree(true);
-      try {
-        // Check if user already has a free plan (active or expired)
-        const { data: existingFree, error: checkError } = await supabase
+    setPurchasing(true);
+    try {
+      // Free plan logic
+      if (plan.plan.price === 0) {
+        const { data: existingFree } = await supabase
           .from("user_purchases")
           .select("id")
           .eq("user_id", user.id)
           .eq("plan_price", 0)
           .limit(1);
 
-        if (checkError) throw checkError;
-
         if (existingFree && existingFree.length > 0) {
-          toast({
-            title: "Limit reached",
-            description: "You can only activate one free plan. Purchase a paid plan to continue mining.",
-            variant: "destructive",
-          });
-          setPurchasingFree(false);
+          toast({ title: "Limit reached", description: "You can only activate one free plan.", variant: "destructive" });
+          setPurchasing(false);
           return;
         }
 
-        const durationDays = plan.plan.durationDays;
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + durationDays);
+        expiresAt.setDate(expiresAt.getDate() + plan.plan.durationDays);
 
         const { error } = await supabase.from("user_purchases").insert({
           user_id: user.id,
@@ -357,35 +377,82 @@ const MiningPlans = () => {
           plan_price: 0,
           plan_type: plan.type,
           daily_earning: plan.plan.dailyEarning,
-          duration_days: durationDays,
+          duration_days: plan.plan.durationDays,
           expires_at: expiresAt.toISOString(),
           status: "active",
         });
-
         if (error) throw error;
 
-        toast({
-          title: "✅ Free plan activated!",
-          description: `${plan.plan.name} is now active. Earnings will be credited daily.`,
-        });
-      } catch (err: any) {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
-      } finally {
-        setPurchasingFree(false);
+        toast({ title: "✅ Free plan activated!", description: `${plan.plan.name} is now active.` });
+        setPurchasing(false);
+        return;
       }
-      return;
-    }
 
-    navigate("/deposit", {
-      state: {
-        planName: plan.plan.name,
-        planPrice: plan.plan.price,
-        planType: plan.type,
-        planDuration: plan.plan.duration,
-        dailyEarning: plan.plan.dailyEarning,
-        durationDays: plan.plan.durationDays,
-      },
-    });
+      // Balance payment
+      if (paymentMethod === "balance") {
+        const price = plan.plan.price;
+
+        // Deduct from USDT first, then BTC
+        let usdtDeduct = Math.min(userBalance.usdt, price);
+        let remainingUsd = price - usdtDeduct;
+        let btcDeduct = 0;
+        if (remainingUsd > 0 && btcPrice > 0) {
+          btcDeduct = remainingUsd / btcPrice;
+          if (btcDeduct > userBalance.btc) {
+            toast({ title: "Insufficient balance", description: `You need $${price.toLocaleString()} but only have $${getBalanceInUsd().toFixed(2)} in your account.`, variant: "destructive" });
+            setPurchasing(false);
+            return;
+          }
+        }
+
+        // Update balances
+        const { error: balError } = await supabase
+          .from("user_balances")
+          .update({
+            usdt_balance: userBalance.usdt - usdtDeduct,
+            btc_balance: userBalance.btc - btcDeduct,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id);
+
+        if (balError) throw balError;
+
+        // Create purchase
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + plan.plan.durationDays);
+
+        const { error } = await supabase.from("user_purchases").insert({
+          user_id: user.id,
+          plan_name: plan.plan.name,
+          plan_price: plan.plan.price,
+          plan_type: plan.type,
+          daily_earning: plan.plan.dailyEarning,
+          duration_days: plan.plan.durationDays,
+          expires_at: expiresAt.toISOString(),
+          status: "active",
+        });
+        if (error) throw error;
+
+        await loadBalance();
+        toast({ title: "✅ Plan purchased!", description: `${plan.plan.name} is now active. Paid from your balance.` });
+      } else {
+        // Redirect to deposit
+        navigate("/deposit", {
+          state: {
+            planName: plan.plan.name,
+            planPrice: plan.plan.price,
+            planType: plan.type,
+            planDuration: plan.plan.duration,
+            dailyEarning: plan.plan.dailyEarning,
+            durationDays: plan.plan.durationDays,
+          },
+        });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   useEffect(() => {
@@ -399,7 +466,7 @@ const MiningPlans = () => {
           const data = await res.json();
           if (data.bitcoin?.usd) setBtcPrice(data.bitcoin.usd);
         }
-      } catch { /* fallback to default */ }
+      } catch { /* fallback */ }
     };
     load();
   }, []);
@@ -407,32 +474,59 @@ const MiningPlans = () => {
   return (
     <DashboardLayout>
       <div className="space-y-8">
+        {/* Balance Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-lg border border-primary/30 bg-primary/5 p-4 flex items-center justify-between flex-wrap gap-3"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Wallet className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Available Balance</p>
+              <p className="text-foreground font-bold font-mono">
+                ${getBalanceInUsd().toFixed(2)} USD
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4 text-xs">
+            <div>
+              <span className="text-muted-foreground">BTC: </span>
+              <span className="text-foreground font-mono">{userBalance.btc.toFixed(6)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">USDT: </span>
+              <span className="text-foreground font-mono">{userBalance.usdt.toFixed(2)}</span>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Info Banner */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
           className="rounded-lg border border-accent/30 bg-accent/5 p-4"
         >
           <p className="text-accent font-semibold text-sm">
-            Your selected mining contract is activated automatically once your payment is confirmed.
+            You can now purchase mining contracts using your account balance! Deposit funds or use existing balance.
           </p>
         </motion.div>
 
         {/* Instructions */}
         <div className="space-y-3 text-sm text-muted-foreground">
           <p className="text-foreground">
-            Mining income is released once a day. You can withdraw the output at any time (without waiting for the end of the contract). There is no limit to the number of withdrawals.
+            Mining income is released once a day. You can withdraw the output at any time (without waiting for the end of the contract).
           </p>
-          <p className="font-medium text-foreground">You can have the fastest bitcoin miner in 5 minutes:</p>
+          <p className="font-medium text-foreground">Get started in 5 minutes:</p>
           <ol className="list-decimal list-inside space-y-1 pl-2">
             <li>Choose one of the below miners</li>
-            <li>Click on "Buy Now" button and pay the miner price</li>
-            <li>Your miner is launched and adds bitcoin to your balance every second (until 1 year)</li>
-            <li>Your bitcoin increases every minute and you can withdraw it or buy a new bigger miner</li>
+            <li>Click "Buy Now" — pay from your balance or deposit new funds</li>
+            <li>Your miner launches and adds earnings to your balance daily</li>
+            <li>Withdraw anytime or reinvest in a bigger miner</li>
           </ol>
-          <p className="text-xs border-t border-border pt-3 mt-3">
-            <span className="font-semibold text-foreground">USDT:</span> The profit of USDT Plans comes from intelligent quantitative trading strategies. Daily earnings may fluctuate based on Binance trading depth. The contract period is only one day, so you can withdraw all your funds the next day.
-          </p>
         </div>
 
         {/* Tabs */}
@@ -470,7 +564,6 @@ const MiningPlans = () => {
 
         {/* Live Activity + Pool Payouts */}
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Activity Feed */}
           <div className="glass-card p-5">
             <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
@@ -479,7 +572,6 @@ const MiningPlans = () => {
             <ActivityTicker />
           </div>
 
-          {/* Pool Payouts */}
           <div className="glass-card p-5">
             <h3 className="text-sm font-semibold text-foreground mb-1">BTC Pool Payouts</h3>
             <p className="text-xs text-muted-foreground mb-4">
@@ -515,7 +607,7 @@ const MiningPlans = () => {
           <DialogHeader>
             <DialogTitle className="text-foreground text-lg">Confirm Purchase</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Review your mining contract details before proceeding to payment.
+              Review your mining contract details and choose payment method.
             </DialogDescription>
           </DialogHeader>
 
@@ -544,6 +636,48 @@ const MiningPlans = () => {
                   </Badge>
                 </div>
               </div>
+
+              {/* Payment Method - only for paid plans */}
+              {selectedPlan.plan.price > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">Payment Method</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setPaymentMethod("balance")}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        paymentMethod === "balance"
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-secondary/30 hover:border-muted-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Wallet className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium text-foreground">Balance</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        ${getBalanceInUsd().toFixed(2)} available
+                      </p>
+                      {!canAfford(selectedPlan.plan.price) && (
+                        <p className="text-xs text-destructive mt-1">Insufficient funds</p>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod("deposit")}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        paymentMethod === "deposit"
+                          ? "border-primary bg-primary/10"
+                          : "border-border bg-secondary/30 hover:border-muted-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Bitcoin className="h-4 w-4 text-accent" />
+                        <span className="text-sm font-medium text-foreground">Deposit</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Pay with crypto</p>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Key details */}
               <div className="space-y-2">
@@ -575,8 +709,19 @@ const MiningPlans = () => {
             <Button variant="outline" onClick={() => setSelectedPlan(null)} className="border-border">
               Cancel
             </Button>
-            <Button onClick={handleConfirmPurchase} disabled={purchasingFree} className="gradient-primary text-primary-foreground glow-primary">
-              {purchasingFree ? "Activating..." : selectedPlan?.plan.price === 0 ? "Activate Free Plan" : "Proceed to Payment"}
+            <Button
+              onClick={handleConfirmPurchase}
+              disabled={purchasing || (paymentMethod === "balance" && selectedPlan?.plan.price !== 0 && !canAfford(selectedPlan?.plan.price ?? 0))}
+              className="gradient-primary text-primary-foreground glow-primary"
+            >
+              {purchasing
+                ? "Processing..."
+                : selectedPlan?.plan.price === 0
+                  ? "Activate Free Plan"
+                  : paymentMethod === "balance"
+                    ? `Pay $${selectedPlan?.plan.price.toLocaleString()} from Balance`
+                    : "Proceed to Deposit"
+              }
             </Button>
           </DialogFooter>
         </DialogContent>
