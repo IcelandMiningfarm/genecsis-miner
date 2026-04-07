@@ -49,7 +49,7 @@ const MiningPulse = () => (
   </div>
 );
 
-const MiningSimulator = ({ activePlans, miningPower }: { activePlans: number; miningPower: number }) => {
+const MiningMonitor = ({ activePlans, miningPower }: { activePlans: number; miningPower: number }) => {
   const [hashProgress, setHashProgress] = useState(0);
   const [blocksFound, setBlocksFound] = useState(0);
   const [temp, setTemp] = useState(62);
@@ -83,7 +83,7 @@ const MiningSimulator = ({ activePlans, miningPower }: { activePlans: number; mi
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Cpu className="h-5 w-5 text-primary" />
-          <h3 className="text-foreground font-semibold">Mining Simulator</h3>
+          <h3 className="text-foreground font-semibold">Mining Monitor</h3>
         </div>
         <span className="text-xs text-muted-foreground font-mono">Blocks: {blocksFound}</span>
       </div>
@@ -211,8 +211,8 @@ const Dashboard = () => {
           </motion.div>
         )}
 
-        {/* Mining Simulator */}
-        <MiningSimulator activePlans={stats.activePlans} miningPower={stats.miningPower} />
+        {/* Mining Monitor */}
+        <MiningMonitor activePlans={stats.activePlans} miningPower={stats.miningPower} />
 
         {/* No Mining Warning */}
         {!hasMining && (
