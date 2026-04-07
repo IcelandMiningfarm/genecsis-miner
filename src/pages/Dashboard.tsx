@@ -83,7 +83,7 @@ const MiningMonitor = ({ activePlans, miningPower }: { activePlans: number; mini
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Cpu className="h-5 w-5 text-primary" />
-          <h3 className="text-foreground font-semibold">Mining Simulator</h3>
+          <h3 className="text-foreground font-semibold">Mining Monitor</h3>
         </div>
         <span className="text-xs text-muted-foreground font-mono">Blocks: {blocksFound}</span>
       </div>
