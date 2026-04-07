@@ -49,6 +49,84 @@ const MiningPulse = () => (
   </div>
 );
 
+const MiningSimulator = ({ activePlans, miningPower }: { activePlans: number; miningPower: number }) => {
+  const [hashProgress, setHashProgress] = useState(0);
+  const [blocksFound, setBlocksFound] = useState(0);
+  const [temp, setTemp] = useState(62);
+  const [fanSpeed, setFanSpeed] = useState(74);
+
+  useEffect(() => {
+    if (activePlans === 0) return;
+    const interval = setInterval(() => {
+      setHashProgress((prev) => {
+        if (prev >= 100) {
+          setBlocksFound((b) => b + 1);
+          return 0;
+        }
+        return prev + (0.5 + Math.random() * 2);
+      });
+      setTemp(60 + Math.random() * 8);
+      setFanSpeed(70 + Math.random() * 10);
+    }, 200);
+    return () => clearInterval(interval);
+  }, [activePlans]);
+
+  if (activePlans === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="glass-card p-5"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Cpu className="h-5 w-5 text-primary" />
+          <h3 className="text-foreground font-semibold">Mining Simulator</h3>
+        </div>
+        <span className="text-xs text-muted-foreground font-mono">Blocks: {blocksFound}</span>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-muted-foreground">Hash Progress</span>
+            <span className="text-xs font-mono text-primary">{Math.min(hashProgress, 100).toFixed(1)}%</span>
+          </div>
+          <div className="relative">
+            <Progress value={Math.min(hashProgress, 100)} className="h-3 bg-secondary" />
+            <motion.div
+              className="absolute inset-0 rounded-full opacity-30"
+              style={{ background: "linear-gradient(90deg, transparent 0%, hsl(var(--primary)) 50%, transparent 100%)", backgroundSize: "200% 100%" }}
+              animate={{ backgroundPosition: ["200% 0%", "-200% 0%"] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-secondary/50 rounded-lg p-3 text-center">
+            <Zap className="h-4 w-4 text-primary mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground">Hashrate</p>
+            <p className="text-sm font-mono font-semibold text-foreground">{miningPower.toFixed(1)} TH/s</p>
+          </div>
+          <div className="bg-secondary/50 rounded-lg p-3 text-center">
+            <Thermometer className="h-4 w-4 text-accent mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground">GPU Temp</p>
+            <p className="text-sm font-mono font-semibold text-foreground">{temp.toFixed(0)}°C</p>
+          </div>
+          <div className="bg-secondary/50 rounded-lg p-3 text-center">
+            <Fan className="h-4 w-4 text-primary mx-auto mb-1" />
+            <p className="text-xs text-muted-foreground">Fan Speed</p>
+            <p className="text-sm font-mono font-semibold text-foreground">{fanSpeed.toFixed(0)}%</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 const Dashboard = () => {
   const { user } = useAuth();
   const { stats, activePurchases, chartData, isConnected, btcPrice, hasMining } = useLiveMiningData();
