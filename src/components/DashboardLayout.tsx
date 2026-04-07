@@ -27,6 +27,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const { signOut } = useAuth();
   const { isAdmin } = useAdminCheck();
+  useTawkTo();
 
   const handleLogout = async () => {
     await signOut();
