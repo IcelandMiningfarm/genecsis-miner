@@ -5,6 +5,7 @@ import {
   Settings, LogOut, Menu, X, ClipboardList, History, Users, ShieldCheck, Receipt
 } from "lucide-react";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useTawkTo } from "@/hooks/useTawkTo";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -26,6 +27,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const { signOut } = useAuth();
   const { isAdmin } = useAdminCheck();
+  useTawkTo();
 
   const handleLogout = async () => {
     await signOut();
