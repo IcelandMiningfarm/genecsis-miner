@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Bitcoin, DollarSign, TrendingUp, Zap, ArrowUpRight, ArrowDownRight,
-  BarChart3, ShieldAlert, Pickaxe
+  BarChart3, ShieldAlert, Pickaxe, Cpu, Thermometer, Fan
 } from "lucide-react";
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line } from "recharts";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +11,7 @@ import { LiveIndicator } from "@/components/LiveIndicator";
 import { useLiveMiningData } from "@/hooks/useLiveMiningData";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 // Animated counter component
 const AnimatedValue = ({ value, prefix = "", suffix = "", decimals = 2 }: { value: number; prefix?: string; suffix?: string; decimals?: number }) => (
