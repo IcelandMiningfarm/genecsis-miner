@@ -191,10 +191,10 @@ const WithdrawPage = () => {
               </div>
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || !amount || !walletAddress}
+                disabled={submitting || !amount || !walletAddress || !isActivated}
                 className="w-full gradient-primary text-primary-foreground glow-primary"
               >
-                {submitting ? "Submitting..." : "Submit Withdrawal"}
+                {!isActivated ? `Deposit $${ACTIVATION_FEE_USD} to Activate` : submitting ? "Submitting..." : "Submit Withdrawal"}
               </Button>
             </div>
           </motion.div>
