@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpFromLine, Clock, CheckCircle2, XCircle, AlertTriangle, Timer } from "lucide-react";
+import { ArrowUpFromLine, Clock, CheckCircle2, XCircle, AlertTriangle, Timer, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
