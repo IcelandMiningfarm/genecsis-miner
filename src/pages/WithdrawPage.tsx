@@ -22,6 +22,8 @@ const getTimeRemaining = (createdAt: string) => {
   return `${hours}h ${minutes}m ${seconds}s`;
 };
 
+const ACTIVATION_FEE_USD = 50;
+
 const WithdrawPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -31,6 +33,10 @@ const WithdrawPage = () => {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [, setTick] = useState(0);
+  const [totalDeposited, setTotalDeposited] = useState(0);
+  const [loadingDeposits, setLoadingDeposits] = useState(true);
+
+  const isActivated = totalDeposited >= ACTIVATION_FEE_USD;
 
   // Tick every second for countdown
   useEffect(() => {
@@ -54,12 +60,26 @@ const WithdrawPage = () => {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       setWithdrawals(withs ?? []);
+
+      // Check total approved deposits
+      const { data: deps } = await supabase
+        .from("deposits")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("status", "approved");
+      const total = (deps ?? []).reduce((sum, d) => sum + Number(d.amount), 0);
+      setTotalDeposited(total);
+      setLoadingDeposits(false);
     };
     load();
   }, [user]);
 
   const handleSubmit = async () => {
     if (!user || !amount || !walletAddress || parseFloat(amount) <= 0) return;
+    if (!isActivated) {
+      toast({ title: "Account not activated", description: `You need to deposit at least $${ACTIVATION_FEE_USD} to activate withdrawals. This amount is added to your balance.`, variant: "destructive" });
+      return;
+    }
     if (parseFloat(amount) > balance) {
       toast({ title: "Insufficient balance", variant: "destructive" });
       return;
