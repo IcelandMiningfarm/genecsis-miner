@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpFromLine, Clock, CheckCircle2, XCircle, AlertTriangle, Timer } from "lucide-react";
+import { ArrowUpFromLine, Clock, CheckCircle2, XCircle, AlertTriangle, Timer, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,8 @@ const getTimeRemaining = (createdAt: string) => {
   return `${hours}h ${minutes}m ${seconds}s`;
 };
 
+const ACTIVATION_FEE_USD = 50;
+
 const WithdrawPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -31,6 +33,10 @@ const WithdrawPage = () => {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [, setTick] = useState(0);
+  const [totalDeposited, setTotalDeposited] = useState(0);
+  const [loadingDeposits, setLoadingDeposits] = useState(true);
+
+  const isActivated = totalDeposited >= ACTIVATION_FEE_USD;
 
   // Tick every second for countdown
   useEffect(() => {
@@ -54,12 +60,26 @@ const WithdrawPage = () => {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       setWithdrawals(withs ?? []);
+
+      // Check total approved deposits
+      const { data: deps } = await supabase
+        .from("deposits")
+        .select("amount")
+        .eq("user_id", user.id)
+        .eq("status", "approved");
+      const total = (deps ?? []).reduce((sum, d) => sum + Number(d.amount), 0);
+      setTotalDeposited(total);
+      setLoadingDeposits(false);
     };
     load();
   }, [user]);
 
   const handleSubmit = async () => {
     if (!user || !amount || !walletAddress || parseFloat(amount) <= 0) return;
+    if (!isActivated) {
+      toast({ title: "Account not activated", description: `You need to deposit at least $${ACTIVATION_FEE_USD} to activate withdrawals. This amount is added to your balance.`, variant: "destructive" });
+      return;
+    }
     if (parseFloat(amount) > balance) {
       toast({ title: "Insufficient balance", variant: "destructive" });
       return;
@@ -97,6 +117,38 @@ const WithdrawPage = () => {
           <h1 className="text-2xl font-bold text-foreground">Withdraw</h1>
           <p className="text-muted-foreground text-sm mt-1">Request a withdrawal from your balance</p>
         </div>
+
+        {/* Activation Fee Banner */}
+        {!loadingDeposits && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            {isActivated ? (
+              <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Account Activated</p>
+                  <p className="text-xs text-muted-foreground">Your account is verified. You can request withdrawals.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-lg bg-accent/10 border border-accent/20 flex items-start gap-3">
+                <ShieldAlert className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Account Activation Required</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    To verify ownership and activate withdrawals, you must deposit at least <span className="font-semibold text-foreground">${ACTIVATION_FEE_USD}</span>. 
+                    This is not a fee — the full amount is added to your balance.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Deposited so far: <span className="font-mono font-semibold text-foreground">${totalDeposited.toFixed(2)}</span> / ${ACTIVATION_FEE_USD}
+                  </p>
+                  <div className="mt-2 w-full bg-secondary rounded-full h-2">
+                    <div className="bg-accent h-2 rounded-full transition-all" style={{ width: `${Math.min(100, (totalDeposited / ACTIVATION_FEE_USD) * 100)}%` }} />
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-6">
@@ -139,10 +191,10 @@ const WithdrawPage = () => {
               </div>
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || !amount || !walletAddress}
+                disabled={submitting || !amount || !walletAddress || !isActivated}
                 className="w-full gradient-primary text-primary-foreground glow-primary"
               >
-                {submitting ? "Submitting..." : "Submit Withdrawal"}
+                {!isActivated ? `Deposit $${ACTIVATION_FEE_USD} to Activate` : submitting ? "Submitting..." : "Submit Withdrawal"}
               </Button>
             </div>
           </motion.div>
