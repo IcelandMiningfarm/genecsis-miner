@@ -49,7 +49,7 @@ const LoginPage = () => {
 
         // Update profile with username and referral code if provided
         if (signUpData.user) {
-          const updates: Record<string, string> = {};
+          const updates: { username?: string; referred_by?: string } = {};
           if (username.trim()) updates.username = username.trim();
           if (referralCode.trim()) updates.referred_by = referralCode.trim().toUpperCase();
           if (Object.keys(updates).length > 0) {
